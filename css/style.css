@@ -1318,9 +1318,3 @@ table td {
 #ds-reset .ds-post-button:hover {
   background: #608cb7 !important;
 }
-#ds-reset * {
-  cursor: url("http://om8u46rmb.bkt.clouddn.com/sword2.ico"), auto !important;
-}
-#ds-reset :active {
-  cursor: url("http://om8u46rmb.bkt.clouddn.com/sword1.ico"), auto !important;
-}
