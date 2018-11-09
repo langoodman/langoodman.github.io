@@ -1,10 +1,4 @@
 /* reset */
-* {
-  cursor: url("http://om8u46rmb.bkt.clouddn.com/sword2.ico"), auto !important;
-}
-:active {
-  cursor: url("http://om8u46rmb.bkt.clouddn.com/sword1.ico"), auto !important;
-}
 body,
 dl,
 dt,
