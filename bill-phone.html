@@ -29,7 +29,7 @@
         const manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; manifestLink.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)); document.head.appendChild(manifestLink);
     </script>
 
-    <style>
+<style>
         :root {
             --primary: #2563eb; --primary-hover: #1d4ed8;
             --purple: #7c3aed; --purple-hover: #6d28d9;
@@ -89,6 +89,14 @@
         .dropdown-menu.show { display: block; animation: fadeIn 0.1s ease; }
         .dropdown-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-size: 1rem; }
         
+        /* === 核心修复：强制输入框可选中，解决 iOS PWA 键盘无法唤起问题 === */
+        input, textarea, select, .form-control {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            /* 防止iOS输入框点击高亮闪烁 */
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+
         /* 输入折叠面板样式 (添加 box-sizing 防止撑破容器) */
         .input-toggle-btn { 
             width: 100%; 
@@ -132,7 +140,7 @@
         
         .plan-card { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; overflow: hidden; background: white; transition: box-shadow 0.2s; }
         
-        /* 计划/归纳 卡片头部 - 修复挤压问题 */
+        /* 计划/归纳 卡片头部 */
         .plan-header { 
             padding: 15px 15px; 
             display: flex; 
@@ -151,28 +159,26 @@
         }
         .plan-card:not(.collapsed) .plan-header { border-bottom-color: var(--border); background: #f8fafc; }
         
-        /* 头部第一行：名称 + 总金额 */
+        /* 头部第一行：名称 + 总金额 (修复挤压换行问题) */
         .plan-header-top { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             width: 100%; 
-            flex-wrap: wrap; /* 关键：允许换行 */
-            gap: 8px; /* 换行后的间距 */
+            flex-wrap: wrap; /* 允许换行 */
+            gap: 8px; /* 换行后保留间距 */
         }
         .plan-header-top .header-left {
             display: flex;
             align-items: center;
-            /* 关键：取消 flex:1，允许根据内容宽度自适应，防止挤压 */
-            /* overflow: hidden; 删除这行，防止图标被切掉 */
-            white-space: nowrap; /* 防止名称换行 */
+            white-space: nowrap; /* 关键：强制左侧标题不换行 */
         }
         .plan-header-top .header-right {
             white-space: nowrap; 
+            margin-left: auto; /* 靠右 */
             text-align: right;
             flex-shrink: 0;
-            margin-left: auto; /* 靠右对齐，配合 flex-wrap 即使换行也会靠右 */
-            font-size: 0.85rem; /* 稍微缩小金额字体适配移动端 */
+            font-size: 0.85rem;
         }
 
         .plan-header-actions { display: flex; gap: 8px; width: 100%; justify-content: space-between; }
@@ -180,6 +186,7 @@
         
         /* 通用折叠图标 */
         .toggle-icon { transition: transform 0.3s ease; margin-right: 8px; color: var(--text-sub); display: inline-block; font-size: 0.8rem; }
+        /* 父级折叠时，图标旋转 */
         .plan-card.collapsed .toggle-icon, .analysis-month-group.collapsed .toggle-icon { transform: rotate(-90deg); }
         
         /* 折叠隐藏内容核心逻辑 */
@@ -669,11 +676,9 @@
                     <td>${r.l2}</td>
                     <td>${r.note} ${sourceBadge}</td>
                     <td class="amount-cell">¥${parseFloat(r.amount).toFixed(2)}</td>
-                    <!-- 关键修改在这里：增加了 align-items: center -->
                     <td style="display:flex; gap:5px; align-items: center;">
                         <button class="${starClass}" onclick="app.toggleRecordSpecial(${r.id}, '${d}')">${starIcon}</button>
                         ${r.source==='plan'
-                            // 关键修改在这里：去掉了 padding-top
                             ? '<span style="color:#94a3b8;font-size:0.8rem;">关联</span>'
                             : `<button class="btn btn-outline btn-sm" onclick="app.editRecord(${r.id})">✏️</button><button class="btn btn-danger btn-sm" onclick="app.deleteRecord(${r.id})">🗑️</button>`
                         }
@@ -869,6 +874,7 @@
         },
         batchUnsyncPlan(pid) { this.confirm('全部取消入账？', ()=>{ const p=this.data.plans.find(x=>x.id===pid); let c=0; p.items.forEach(i=>{if(i.isSynced){this.removeRecordGlobal(i.linkedRecordId);i.isSynced=false;i.linkedRecordId=null;c++}}); if(c>0){this.saveData();this.refreshPlanUI(p.type);this.loadDailyRecords();this.toast(`取消 ${c} 条`);} }); },
         refreshPlanUI(type) { type === 'budget' ? this.renderBudgets() : this.renderProjects(); },
+        
         // --- 修复图表显示：适配移动端半径，防止文字被截断 ---
         showPlanChart(pid) {
             const p = this.data.plans.find(x => x.id === pid);
