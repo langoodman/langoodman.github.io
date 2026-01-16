@@ -90,7 +90,24 @@
         .dropdown-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-size: 1rem; }
         
         /* 输入折叠面板样式 (添加 box-sizing 防止撑破容器) */
-        .input-toggle-btn { width: 100%; box-sizing: border-box; padding: 12px; background: white; border: 1px dashed #cbd5e1; color: var(--text-sub); border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; margin-bottom: 15px; font-size: 1rem; }
+        .input-toggle-btn { 
+            width: 100%; 
+            box-sizing: border-box;
+            padding: 12px; 
+            background: white; 
+            border: 1px dashed #cbd5e1; 
+            color: var(--text-sub); 
+            border-radius: 12px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
+            transition: 0.2s; 
+            margin-bottom: 15px; 
+            font-size: 1rem; 
+        }
         .input-toggle-btn:hover { border-color: var(--primary); color: var(--primary); background: #f8fafc; }
         .input-toggle-btn.active { background: var(--primary); color: white; border-style: solid; border-color: var(--primary); }
         .input-area-wrapper { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease; margin-bottom: 0; }
@@ -99,7 +116,12 @@
 
         /* 表格优化 */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--border); }
+        th, td { 
+            text-align: left; 
+            padding: 12px 10px; 
+            border-bottom: 1px solid var(--border); 
+            white-space: nowrap;
+        }
         th { background: #f8fafc; font-weight: 600; color: var(--text-sub); font-size: 0.9rem; }
         td { font-size: 0.95rem; }
         .amount-cell { font-family: 'Consolas', monospace; font-weight: 700; color: var(--text-main); }
@@ -110,7 +132,7 @@
         
         .plan-card { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; overflow: hidden; background: white; transition: box-shadow 0.2s; }
         
-        /* 计划/归纳 卡片头部 */
+        /* 计划/归纳 卡片头部 - 修复挤压问题 */
         .plan-header { 
             padding: 15px 15px; 
             display: flex; 
@@ -129,24 +151,28 @@
         }
         .plan-card:not(.collapsed) .plan-header { border-bottom-color: var(--border); background: #f8fafc; }
         
-        /* 头部第一行：名称 + 总金额 (强制同一行) */
+        /* 头部第一行：名称 + 总金额 */
         .plan-header-top { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             width: 100%; 
+            flex-wrap: wrap; /* 关键：允许换行 */
+            gap: 8px; /* 换行后的间距 */
         }
         .plan-header-top .header-left {
             display: flex;
             align-items: center;
-            flex: 1; 
-            overflow: hidden;
+            /* 关键：取消 flex:1，允许根据内容宽度自适应，防止挤压 */
+            /* overflow: hidden; 删除这行，防止图标被切掉 */
+            white-space: nowrap; /* 防止名称换行 */
         }
         .plan-header-top .header-right {
             white-space: nowrap; 
-            margin-left: 10px;
             text-align: right;
             flex-shrink: 0;
+            margin-left: auto; /* 靠右对齐，配合 flex-wrap 即使换行也会靠右 */
+            font-size: 0.85rem; /* 稍微缩小金额字体适配移动端 */
         }
 
         .plan-header-actions { display: flex; gap: 8px; width: 100%; justify-content: space-between; }
@@ -154,7 +180,6 @@
         
         /* 通用折叠图标 */
         .toggle-icon { transition: transform 0.3s ease; margin-right: 8px; color: var(--text-sub); display: inline-block; font-size: 0.8rem; }
-        /* 父级折叠时，图标旋转 */
         .plan-card.collapsed .toggle-icon, .analysis-month-group.collapsed .toggle-icon { transform: rotate(-90deg); }
         
         /* 折叠隐藏内容核心逻辑 */
@@ -269,7 +294,9 @@
             /* 查询列表的容器允许横向滚动，但默认宽度100% */
             #daily-analysis-list-view > div { overflow-x: auto; width: 100%; }
             
-            th, td { padding: 12px 8px; }
+            /* 缩小单元格左右padding，确保5列能放下 */
+            th, td { padding: 12px 4px; font-size: 0.85rem; }
+            
             .analysis-toolbar { flex-direction: column; align-items: stretch; }
             .analysis-toolbar > div { width: 100% !important; }
             .charts-wrapper { grid-template-columns: 1fr; }
@@ -633,10 +660,28 @@
         loadDailyRecords() { 
             const d=document.getElementById('daily-date').value, list=this.data.records[d]||[]; 
             document.getElementById('daily-tbody').innerHTML=list.map(r=> {
-                const starIcon = r.isSpecial ? '🌟' : '☆'; const starClass = r.isSpecial ? 'btn-star active' : 'btn-star'; const sourceBadge = r.source==='plan'?'<span style="font-size:0.8em;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;">计划</span>':'';
-                return `<tr><td>${r.l1}</td><td>${r.l2}</td><td>${r.note} ${sourceBadge}</td><td class="amount-cell">¥${parseFloat(r.amount).toFixed(2)}</td><td style="display:flex; gap:5px;"><button class="${starClass}" onclick="app.toggleRecordSpecial(${r.id}, '${d}')">${starIcon}</button>${r.source==='plan'?'<span style="color:#94a3b8;font-size:0.8rem;padding-top:4px;">关联</span>':`<button class="btn btn-outline btn-sm" onclick="app.editRecord(${r.id})">✏️</button><button class="btn btn-danger btn-sm" onclick="app.deleteRecord(${r.id})">🗑️</button>`}</td></tr>`;
+                const starIcon = r.isSpecial ? '🌟' : '☆'; 
+                const starClass = r.isSpecial ? 'btn-star active' : 'btn-star'; 
+                const sourceBadge = r.source==='plan'?'<span style="font-size:0.8em;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;">计划</span>':'';
+                
+                return `<tr>
+                    <td>${r.l1}</td>
+                    <td>${r.l2}</td>
+                    <td>${r.note} ${sourceBadge}</td>
+                    <td class="amount-cell">¥${parseFloat(r.amount).toFixed(2)}</td>
+                    <!-- 关键修改在这里：增加了 align-items: center -->
+                    <td style="display:flex; gap:5px; align-items: center;">
+                        <button class="${starClass}" onclick="app.toggleRecordSpecial(${r.id}, '${d}')">${starIcon}</button>
+                        ${r.source==='plan'
+                            // 关键修改在这里：去掉了 padding-top
+                            ? '<span style="color:#94a3b8;font-size:0.8rem;">关联</span>'
+                            : `<button class="btn btn-outline btn-sm" onclick="app.editRecord(${r.id})">✏️</button><button class="btn btn-danger btn-sm" onclick="app.deleteRecord(${r.id})">🗑️</button>`
+                        }
+                    </td>
+                </tr>`;
             }).join(''); 
-            document.getElementById('daily-total').innerText='¥'+list.reduce((s,r)=>s+parseFloat(r.amount),0).toFixed(2); this.resetForm(); 
+            document.getElementById('daily-total').innerText='¥'+list.reduce((s,r)=>s+parseFloat(r.amount),0).toFixed(2); 
+            this.resetForm(); 
         },
 
         addOrUpdateRecord() { 
@@ -759,7 +804,7 @@
                 const card = document.createElement('div'); card.className = 'plan-card collapsed'; 
                 let itemsHtml = pageItems.map(i => {
                     const tag = i.origin==='daily' ? '<span class="source-tag source-daily">日常同步</span>' : '<span class="source-tag source-special">独立记录</span>';
-                    const delBtn = i.origin==='special' ? `<button class="btn btn-danger btn-sm" onclick="app.deleteSpecialItem(${i.id})">×</button>` : `<button class="btn btn-outline btn-sm" style="color:#f59e0b;border-color:#f59e0b" onclick="app.toggleRecordSpecial(${i.id}, '${i.date}')" title="取消关注">🌟 取消</button>`;
+                    const delBtn = i.origin==='special' ? `<button class="btn btn-danger btn-sm" onclick="app.deleteSpecialItem(${i.id})">×</button>` : `<button class="btn btn-outline btn-sm" style="color:#f59e0b;border-color:#f59e0b" onclick="app.toggleRecordSpecial(${i.id}, '${i.date}')" title="取消关注">🌟</button>`;
                     return `<div class="analysis-day-row"><div style="flex:1"><div style="font-weight:500">${i.displayName} ${tag}</div><div style="font-size:0.85rem;color:#94a3b8">${i.date} ${i.note ? '- '+i.note : ''}</div></div><div style="display:flex;align-items:center;gap:10px;"><span style="font-weight:bold;color:var(--special)">¥${parseFloat(i.amount).toFixed(2)}</span>${delBtn}</div></div>`;
                 }).join('');
                 const paginationHtml = totalCount > 0 ? `<div class="card-pagination" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; padding-top: 15px; border-top: 1px dashed #e2e8f0; margin-top: 10px;"><select class="page-size-select" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border);" onchange="app.changeSpecialYearPageSize('${y}', this.value)" onclick="event.stopPropagation()"><option value="10" ${ps.pageSize==10?'selected':''}>10条</option><option value="20" ${ps.pageSize==20?'selected':''}>20条</option><option value="50" ${ps.pageSize==50?'selected':''}>50条</option></select><button class="card-page-btn" style="padding: 2px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; background: white; border-radius: 4px;" onclick="event.stopPropagation();app.changeSpecialYearPage('${y}', -1)" ${ps.page<=1?'disabled':''}>&lt;</button><span class="card-page-info" style="font-size: 0.8rem; color: #64748b;">${ps.page}/${totalPages}</span><button class="card-page-btn" style="padding: 2px 8px; font-size: 0.8rem; border: 1px solid #cbd5e1; background: white; border-radius: 4px;" onclick="event.stopPropagation();app.changeSpecialYearPage('${y}', 1)" ${ps.page>=totalPages?'disabled':''}>&gt;</button></div>` : '';
@@ -824,13 +869,77 @@
         },
         batchUnsyncPlan(pid) { this.confirm('全部取消入账？', ()=>{ const p=this.data.plans.find(x=>x.id===pid); let c=0; p.items.forEach(i=>{if(i.isSynced){this.removeRecordGlobal(i.linkedRecordId);i.isSynced=false;i.linkedRecordId=null;c++}}); if(c>0){this.saveData();this.refreshPlanUI(p.type);this.loadDailyRecords();this.toast(`取消 ${c} 条`);} }); },
         refreshPlanUI(type) { type === 'budget' ? this.renderBudgets() : this.renderProjects(); },
+        // --- 修复图表显示：适配移动端半径，防止文字被截断 ---
         showPlanChart(pid) {
-            const p = this.data.plans.find(x => x.id === pid); if(!p || !p.items.length) return this.toast('无数据可生成图表', 'error');
+            const p = this.data.plans.find(x => x.id === pid);
+            if(!p || !p.items.length) return this.toast('无数据可生成图表', 'error');
+            
             document.getElementById('chart-view-modal').style.display = 'flex';
+            
             setTimeout(() => {
-                const dom = document.getElementById('chart-view-container'); let chart = echarts.getInstanceByDom(dom); if(chart) chart.dispose(); chart = echarts.init(dom); this.data.currentChartInstance = chart;
-                const data = p.items.filter(i=>parseFloat(i.actual)>0).map(i=>({name: i.name, value: parseFloat(i.actual)})); const total = data.reduce((s,i)=>s+i.value, 0);
-                const option = { title: { text: p.name + (p.type==='budget'&&p.totalBudget?` (预算: ¥${p.totalBudget})`:''), subtext: `总支出: ¥${total.toFixed(2)}`, left: 'center', top: 20, textStyle: { fontSize: 24 } }, tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' }, legend: { bottom: 20, type: 'scroll' }, series: [{ type: 'pie', radius: ['40%', '65%'], center: ['50%', '55%'], data: data, itemStyle: { borderRadius: 0, borderWidth: 0, borderColor: 'transparent' }, label: { show: true, formatter: '{b}: ¥{c}\n({d}%)', fontSize: 14, lineHeight: 20 }, avoidLabelOverlap: true }] };
+                const dom = document.getElementById('chart-view-container');
+                let chart = echarts.getInstanceByDom(dom);
+                if(chart) chart.dispose();
+                chart = echarts.init(dom);
+                this.data.currentChartInstance = chart;
+                
+                // 过滤出金额大于0的项目
+                const data = p.items.filter(i => parseFloat(i.actual) > 0).map(i => ({
+                    name: i.name, 
+                    value: parseFloat(i.actual)
+                }));
+                const total = data.reduce((s,i) => s + i.value, 0);
+                
+                // === 关键修复：检测屏幕宽度 ===
+                const isMobile = window.innerWidth < 768;
+                
+                // 移动端使用更小的半径 (30%-50%)，桌面端使用 (40%-65%)
+                // 这样能给左右两侧的文字留出更多空间
+                const radiusSetting = isMobile ? ['30%', '50%'] : ['40%', '65%'];
+                
+                const option = {
+                    title: { 
+                        text: p.name + (p.type==='budget' && p.totalBudget ? ` (预算: ¥${p.totalBudget})` : ''), 
+                        subtext: `总支出: ¥${total.toFixed(2)}`, 
+                        left: 'center', 
+                        top: isMobile ? 10 : 20, // 移动端标题靠上一点
+                        textStyle: { fontSize: isMobile ? 18 : 24 } 
+                    },
+                    tooltip: { 
+                        trigger: 'item', 
+                        formatter: '{b}: ¥{c} ({d}%)',
+                        confine: true // 限制提示框在图表区域内
+                    },
+                    legend: { 
+                        bottom: 10, 
+                        type: 'scroll' 
+                    },
+                    series: [{ 
+                        type: 'pie', 
+                        radius: radiusSetting, // 应用动态半径
+                        center: ['50%', '55%'], 
+                        data: data, 
+                        itemStyle: { 
+                            borderRadius: 0, 
+                            borderWidth: 0, 
+                            borderColor: 'transparent' 
+                        }, 
+                        label: { 
+                            show: true, 
+                            formatter: '{b}: ¥{c}\n({d}%)', 
+                            fontSize: 12, 
+                            lineHeight: 16,
+                            edgeDistance: 10 // 文字距离边缘的距离
+                        }, 
+                        // 关键修复：缩短引导线长度，把文字拉近
+                        labelLine: {
+                            length: isMobile ? 10 : 20,
+                            length2: isMobile ? 10 : 20,
+                            maxSurfaceAngle: 80
+                        },
+                        avoidLabelOverlap: true 
+                    }]
+                };
                 chart.setOption(option);
             }, 100);
         },
